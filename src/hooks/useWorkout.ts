@@ -28,9 +28,36 @@ export function useWorkout() {
   const [workoutDay, setWorkoutDay] = useState<WorkoutDay | null>(null);
   const [completedExercises, setCompletedExercises] = useState<string[]>([]);
   const [progressLoaded, setProgressLoaded] = useState(false);
+  const [restTimer, setRestTimer] = useState<{ active: boolean; seconds: number }>({ active: false, seconds: 0 });
+  const [history, setHistory] = useState<Record<number, string[]>>({});
 
   // Calculate display day (1-7) based on currentDay
   const displayDay = ((currentDay - 1) % 7) + 1;
+
+  useEffect(() => {
+    // Load history from local storage
+    const localUser = localStorage.getItem("workoutUser");
+    if (localUser) {
+      const data = JSON.parse(localUser);
+      setHistory(data.progress || {});
+    }
+  }, [currentDay, completedExercises]);
+
+  useEffect(() => {
+    let interval: any;
+    if (restTimer.active && restTimer.seconds > 0) {
+      interval = setInterval(() => {
+        setRestTimer((prev) => ({ ...prev, seconds: prev.seconds - 1 }));
+      }, 1000);
+    } else if (restTimer.seconds === 0) {
+      setRestTimer((prev) => ({ ...prev, active: false }));
+    }
+    return () => clearInterval(interval);
+  }, [restTimer.active, restTimer.seconds]);
+
+  const startTimer = (seconds: number) => {
+    setRestTimer({ active: true, seconds });
+  };
 
   useEffect(() => {
     // Check local storage first for user data
@@ -105,6 +132,8 @@ export function useWorkout() {
   useEffect(() => {
     if (!progressLoaded) return;
 
+    const controller = new AbortController();
+
     const fetchWorkout = async () => {
       const dayStr = displayDay.toString();
       
@@ -114,8 +143,10 @@ export function useWorkout() {
         const plans = JSON.parse(localPlans);
         const dayData = plans[selectedVersion]?.days[dayStr];
         if (dayData) {
-          setWorkoutDay(dayData);
-          setLoading(false);
+          if (!controller.signal.aborted) {
+            setWorkoutDay(dayData);
+            setLoading(false);
+          }
           return;
         }
       }
@@ -125,19 +156,28 @@ export function useWorkout() {
         const workoutRef = doc(db, "workoutPlans", "weeklyPlan", selectedVersion, dayStr);
         const workoutSnap = await getDoc(workoutRef);
 
-        if (workoutSnap.exists()) {
-          setWorkoutDay(workoutSnap.data() as WorkoutDay);
-        } else {
-          setWorkoutDay({ title: "Rest Day", exercises: [] });
+        if (!controller.signal.aborted) {
+          if (workoutSnap.exists()) {
+            setWorkoutDay(workoutSnap.data() as WorkoutDay);
+          } else {
+            setWorkoutDay({ title: "Rest Day", exercises: [] });
+          }
         }
       } catch (e) {
-        console.warn("Firebase workout fetch failed");
-        setWorkoutDay({ title: "Rest Day", exercises: [] });
+        if (!controller.signal.aborted) {
+          console.warn("Firebase workout fetch failed");
+          setWorkoutDay({ title: "Rest Day", exercises: [] });
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
-      setLoading(false);
     };
 
     fetchWorkout();
+
+    return () => controller.abort();
   }, [displayDay, selectedVersion, progressLoaded]);
 
   const toggleExercise = async (exerciseName: string) => {
@@ -146,6 +186,18 @@ export function useWorkout() {
       : [...completedExercises, exerciseName];
 
     setCompletedExercises(newCompleted);
+
+    // Start rest timer if exercise was completed (not undone)
+    if (!completedExercises.includes(exerciseName)) {
+      const exercise = workoutDay?.exercises.find(e => e.name === exerciseName);
+      if (exercise && exercise.rest) {
+        // Parse rest time (e.g., "90s" or "90–150s")
+        const secondsMatch = exercise.rest.match(/(\d+)/);
+        if (secondsMatch) {
+          startTimer(parseInt(secondsMatch[1]));
+        }
+      }
+    }
 
     // Update local storage
     const localUser = localStorage.getItem("workoutUser");
@@ -223,7 +275,11 @@ export function useWorkout() {
     selectedVersion,
     workoutDay,
     completedExercises,
+    restTimer,
+    history,
     toggleExercise,
-    changeVersion
+    changeVersion,
+    startTimer,
+    setRestTimer
   };
 }
