@@ -13,6 +13,8 @@ export interface Exercise {
   rest: string;
   notes: string;
   image: string;
+  description?: string;
+  focusMuscles?: string;
 }
 
 export interface WorkoutDay {

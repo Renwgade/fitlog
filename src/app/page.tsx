@@ -564,7 +564,7 @@ export default function WorkoutApp() {
                   <div key={idx} className="flex items-center justify-between p-6 border-b border-zinc-800/50 last:border-0 hover:bg-emerald-500/5 transition-all group">
                     <div>
                       <p className="font-black text-zinc-100 text-lg tracking-tight">{item.label}</p>
-                      <p className="text-[10px] text-zinc-400 font-black uppercase tracking-[0.2em] mt-0.5 opacity-70 group-hover:text-emerald-400/70">{item.sub}</p>
+                      <p className="text-[10px] text-zinc-400 font-black uppercase tracking-[0.2em] mt-0.5 opacity-100 group-hover:text-emerald-400/70">{item.sub}</p>
                     </div>
                     <div className="text-right">
                       <p className={`text-2xl font-black tracking-tighter ${item.color}`}>{item.value}</p>
@@ -602,10 +602,10 @@ export default function WorkoutApp() {
                     day: "text-zinc-200 font-bold hover:bg-rose-500/20 hover:text-rose-400 rounded-xl transition-all",
                     selected: "bg-rose-600 text-white font-black rounded-xl shadow-[0_0_20px_rgba(225,29,72,0.5)]",
                     today: "text-rose-400 font-black ring-1 ring-rose-500/50",
-                    outside: "text-zinc-600 opacity-30",
+                    outside: "text-zinc-600 opacity-50",
                     caption_label: "text-zinc-100 font-black uppercase tracking-widest text-xs",
                     nav_button: "text-zinc-400 hover:text-white transition-colors",
-                    head_cell: "text-zinc-500 font-black uppercase text-[10px] tracking-widest pb-4",
+                    head_cell: "text-zinc-400 font-black uppercase text-[10px] tracking-widest pb-4",
                   }}
                   modifiers={{
                     workout: Object.keys(workoutDates).map(d => new Date(d + 'T00:00:00'))
@@ -686,9 +686,9 @@ export default function WorkoutApp() {
                       animate={{ opacity: 1 }}
                       className="text-center py-20 bg-zinc-900/20 border-2 border-dashed border-zinc-800/40 rounded-[2rem] backdrop-blur-md"
                     >
-                      <Activity className="h-16 w-16 mx-auto mb-4 opacity-5 animate-pulse" />
-                      <p className="text-xl font-black text-zinc-400 tracking-tight">No activity logged</p>
-                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mt-2">Persistence builds results</p>
+                      <Activity className="h-16 w-16 mx-auto mb-4 opacity-20 animate-pulse" />
+                      <p className="text-xl font-black text-zinc-300 tracking-tight">No activity logged</p>
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 mt-2">Persistence builds results</p>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -724,7 +724,7 @@ export default function WorkoutApp() {
                       <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Wipe all local records</p>
                     </div>
                   </div>
-                  <ArrowRight className="h-6 w-6 text-zinc-500 group-hover:text-red-400 group-hover:translate-x-1 transition-all" />
+                  <ArrowRight className="h-6 w-6 text-zinc-400 group-hover:text-red-400 group-hover:translate-x-1 transition-all" />
                 </Button>
                 
                 <Button 
@@ -741,7 +741,7 @@ export default function WorkoutApp() {
                       <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Re-sync exercise database</p>
                     </div>
                   </div>
-                  <ArrowRight className="h-6 w-6 text-zinc-500 group-hover:text-emerald-400 group-hover:translate-x-1 transition-all" />
+                  <ArrowRight className="h-6 w-6 text-zinc-400 group-hover:text-emerald-400 group-hover:translate-x-1 transition-all" />
                 </Button>
               </div>
             </div>
@@ -777,8 +777,8 @@ export default function WorkoutApp() {
               <div className="flex-1 overflow-y-auto px-6 pb-24">
                 <DrawerHeader className="px-0">
                   <DrawerTitle className="text-3xl font-black text-white tracking-tighter">{selectedExercise.name}</DrawerTitle>
-                  <DrawerDescription className="text-zinc-400 font-bold uppercase tracking-widest text-[10px] mt-1">
-                    Muscle Focus: Hypertrophy
+                  <DrawerDescription className="text-indigo-400 font-black uppercase tracking-[0.2em] text-[10px] mt-1">
+                    Muscle Focus: {selectedExercise.focusMuscles || "Hypertrophy"}
                   </DrawerDescription>
                 </DrawerHeader>
                 
@@ -794,6 +794,13 @@ export default function WorkoutApp() {
                         <Maximize2 className="h-8 w-8 text-white" />
                       </div>
                     </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">Execution Protocol</h4>
+                    <p className="text-zinc-200 text-sm font-bold leading-relaxed bg-zinc-900/40 p-5 rounded-2xl border border-zinc-800/50 shadow-inner">
+                      {selectedExercise.description}
+                    </p>
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
@@ -864,9 +871,9 @@ export default function WorkoutApp() {
               <button 
                 key={item.id}
                 onClick={() => setActiveTab(item.id as any)}
-                className={`relative flex flex-col items-center gap-1.5 transition-all duration-500 flex-1 group py-2 ${isActive ? item.color : 'text-zinc-500 hover:text-zinc-300'}`}
+                className={`relative flex flex-col items-center gap-1.5 transition-all duration-500 flex-1 group py-2 ${isActive ? item.color : 'text-zinc-400 hover:text-zinc-200'}`}
               >
-                <div className={`relative transition-all duration-500 ${isActive ? 'scale-110 -translate-y-1' : 'group-hover:scale-105 opacity-60'}`}>
+                <div className={`relative transition-all duration-500 ${isActive ? 'scale-110 -translate-y-1' : 'group-hover:scale-105 opacity-80'}`}>
                   {isActive && (
                     <motion.div 
                       layoutId="nav-glow-pwa"
