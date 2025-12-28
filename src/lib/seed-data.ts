@@ -100,24 +100,24 @@ const workoutData = {
 
 export const seedWorkoutData = async () => {
   try {
-    const workoutPlansCol = collection(db, "workoutPlans");
-    const weeklyPlanDoc = doc(workoutPlansCol, "weeklyPlan");
-    
-    // We can't set nested collections directly with setDoc easily in one go if they are deep, 
-    // but we can structure them as maps or subcollections.
-    // The requirement says: workoutPlans / weeklyPlan / versionA|versionB / days / 1–7
-    
-    // Let's use versionA and versionB as fields in weeklyPlan for simplicity, 
-    // or as separate documents in a subcollection.
-    
-    const versionACol = collection(weeklyPlanDoc, "versionA");
-    const versionBCol = collection(weeklyPlanDoc, "versionB");
+    // Local storage fallback
+    localStorage.setItem("workoutPlans", JSON.stringify(workoutData));
 
-    for (const [day, data] of Object.entries(workoutData.versionA.days)) {
-      await setDoc(doc(versionACol, day), data);
-    }
-    for (const [day, data] of Object.entries(workoutData.versionB.days)) {
-      await setDoc(doc(versionBCol, day), data);
+    // Firebase (will fail gracefully if keys are missing)
+    try {
+      const workoutPlansCol = collection(db, "workoutPlans");
+      const weeklyPlanDoc = doc(workoutPlansCol, "weeklyPlan");
+      const versionACol = collection(weeklyPlanDoc, "versionA");
+      const versionBCol = collection(weeklyPlanDoc, "versionB");
+
+      for (const [day, data] of Object.entries(workoutData.versionA.days)) {
+        await setDoc(doc(versionACol, day), data);
+      }
+      for (const [day, data] of Object.entries(workoutData.versionB.days)) {
+        await setDoc(doc(versionBCol, day), data);
+      }
+    } catch (e) {
+      console.warn("Firebase seeding skipped or failed:", e);
     }
 
     console.log("Seeding completed successfully!");

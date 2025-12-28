@@ -33,36 +33,71 @@ export function useWorkout() {
   const displayDay = ((currentDay - 1) % 7) + 1;
 
   useEffect(() => {
+    // Check local storage first for user data
+    const localUser = localStorage.getItem("workoutUser");
+    if (localUser) {
+      const data = JSON.parse(localUser);
+      setCurrentDay(data.currentDay || 1);
+      setSelectedVersion(data.selectedVersion || "versionA");
+      setCompletedExercises(data.progress?.[data.currentDay] || []);
+      setProgressLoaded(true);
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setUser(user);
         await initUserProgress(user.uid);
       } else {
-        await signInAnonymously(auth);
+        try {
+          await signInAnonymously(auth);
+        } catch (e) {
+          console.warn("Firebase Auth failed, using local storage only");
+          if (!localUser) {
+            // Initialize local storage if not present
+            const initialData = {
+              currentDay: 1,
+              selectedVersion: "versionA",
+              progress: { 1: [] }
+            };
+            localStorage.setItem("workoutUser", JSON.stringify(initialData));
+            setCurrentDay(1);
+            setSelectedVersion("versionA");
+            setCompletedExercises([]);
+            setProgressLoaded(true);
+          }
+        }
       }
     });
     return () => unsubscribe();
   }, []);
 
   const initUserProgress = async (userId: string) => {
-    const userRef = doc(db, "users", userId);
-    const userSnap = await getDoc(userRef);
+    try {
+      const userRef = doc(db, "users", userId);
+      const userSnap = await getDoc(userRef);
 
-    if (userSnap.exists()) {
-      const data = userSnap.data();
-      setCurrentDay(data.currentDay || 1);
-      setSelectedVersion(data.selectedVersion || "versionA");
-      setCompletedExercises(data.progress?.[data.currentDay] || []);
-    } else {
-      const initialData = {
-        currentDay: 1,
-        selectedVersion: "versionA",
-        progress: { 1: [] }
-      };
-      await setDoc(userRef, initialData);
-      setCurrentDay(1);
-      setSelectedVersion("versionA");
-      setCompletedExercises([]);
+      if (userSnap.exists()) {
+        const data = userSnap.data();
+        setCurrentDay(data.currentDay || 1);
+        setSelectedVersion(data.selectedVersion || "versionA");
+        setCompletedExercises(data.progress?.[data.currentDay] || []);
+        
+        // Sync to local storage
+        localStorage.setItem("workoutUser", JSON.stringify(data));
+      } else {
+        const initialData = {
+          currentDay: 1,
+          selectedVersion: "versionA",
+          progress: { 1: [] }
+        };
+        await setDoc(userRef, initialData);
+        setCurrentDay(1);
+        setSelectedVersion("versionA");
+        setCompletedExercises([]);
+        localStorage.setItem("workoutUser", JSON.stringify(initialData));
+      }
+    } catch (e) {
+      console.warn("Firebase progress init failed, using local storage");
     }
     setProgressLoaded(true);
   };
@@ -72,12 +107,31 @@ export function useWorkout() {
 
     const fetchWorkout = async () => {
       const dayStr = displayDay.toString();
-      const workoutRef = doc(db, "workoutPlans", "weeklyPlan", selectedVersion, dayStr);
-      const workoutSnap = await getDoc(workoutRef);
+      
+      // Try local storage first
+      const localPlans = localStorage.getItem("workoutPlans");
+      if (localPlans) {
+        const plans = JSON.parse(localPlans);
+        const dayData = plans[selectedVersion]?.days[dayStr];
+        if (dayData) {
+          setWorkoutDay(dayData);
+          setLoading(false);
+          return;
+        }
+      }
 
-      if (workoutSnap.exists()) {
-        setWorkoutDay(workoutSnap.data() as WorkoutDay);
-      } else {
+      // Try Firebase
+      try {
+        const workoutRef = doc(db, "workoutPlans", "weeklyPlan", selectedVersion, dayStr);
+        const workoutSnap = await getDoc(workoutRef);
+
+        if (workoutSnap.exists()) {
+          setWorkoutDay(workoutSnap.data() as WorkoutDay);
+        } else {
+          setWorkoutDay({ title: "Rest Day", exercises: [] });
+        }
+      } catch (e) {
+        console.warn("Firebase workout fetch failed");
         setWorkoutDay({ title: "Rest Day", exercises: [] });
       }
       setLoading(false);
@@ -87,38 +141,79 @@ export function useWorkout() {
   }, [displayDay, selectedVersion, progressLoaded]);
 
   const toggleExercise = async (exerciseName: string) => {
-    if (!user) return;
-
     const newCompleted = completedExercises.includes(exerciseName)
       ? completedExercises.filter(id => id !== exerciseName)
       : [...completedExercises, exerciseName];
 
     setCompletedExercises(newCompleted);
 
-    const userRef = doc(db, "users", user.uid);
-    await updateDoc(userRef, {
-      [`progress.${currentDay}`]: newCompleted
-    });
+    // Update local storage
+    const localUser = localStorage.getItem("workoutUser");
+    const userData = localUser ? JSON.parse(localUser) : { progress: {} };
+    userData.progress = userData.progress || {};
+    userData.progress[currentDay] = newCompleted;
+    localStorage.setItem("workoutUser", JSON.stringify(userData));
+
+    // Update Firebase
+    if (user) {
+      try {
+        const userRef = doc(db, "users", user.uid);
+        await updateDoc(userRef, {
+          [`progress.${currentDay}`]: newCompleted
+        });
+      } catch (e) {
+        console.warn("Firebase update failed");
+      }
+    }
 
     // Check if day is completed
-    if (workoutDay && newCompleted.length === workoutDay.exercises.length && workoutDay.exercises.length > 0) {
+    const isRestDay = workoutDay?.exercises.length === 0;
+    const isWorkoutDayComplete = workoutDay && newCompleted.length === workoutDay.exercises.length && workoutDay.exercises.length > 0;
+    const isRestDayComplete = isRestDay && exerciseName === "Rest Complete";
+
+    if (isWorkoutDayComplete || isRestDayComplete) {
       setTimeout(async () => {
         const nextDay = currentDay + 1;
         setCurrentDay(nextDay);
         setCompletedExercises([]);
-        await updateDoc(userRef, {
-          currentDay: nextDay,
-          [`progress.${nextDay}`]: []
-        });
+        
+        // Update local storage for next day
+        userData.currentDay = nextDay;
+        userData.progress[nextDay] = [];
+        localStorage.setItem("workoutUser", JSON.stringify(userData));
+
+        if (user) {
+          try {
+            const userRef = doc(db, "users", user.uid);
+            await updateDoc(userRef, {
+              currentDay: nextDay,
+              [`progress.${nextDay}`]: []
+            });
+          } catch (e) {
+            console.warn("Firebase update failed");
+          }
+        }
       }, 1000);
     }
   };
 
   const changeVersion = async (version: "versionA" | "versionB") => {
-    if (!user) return;
     setSelectedVersion(version);
-    const userRef = doc(db, "users", user.uid);
-    await updateDoc(userRef, { selectedVersion: version });
+    
+    // Update local storage
+    const localUser = localStorage.getItem("workoutUser");
+    const userData = localUser ? JSON.parse(localUser) : {};
+    userData.selectedVersion = version;
+    localStorage.setItem("workoutUser", JSON.stringify(userData));
+
+    if (user) {
+      try {
+        const userRef = doc(db, "users", user.uid);
+        await updateDoc(userRef, { selectedVersion: version });
+      } catch (e) {
+        console.warn("Firebase update failed");
+      }
+    }
   };
 
   return {
