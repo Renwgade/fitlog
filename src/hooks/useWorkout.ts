@@ -30,6 +30,7 @@ export function useWorkout() {
   const [progressLoaded, setProgressLoaded] = useState(false);
   const [restTimer, setRestTimer] = useState<{ active: boolean; seconds: number }>({ active: false, seconds: 0 });
   const [history, setHistory] = useState<Record<number, string[]>>({});
+  const [workoutDates, setWorkoutDates] = useState<Record<string, { day: number, exercises: string[] }>>({});
 
   // Calculate display day (1-7) based on currentDay
   const displayDay = ((currentDay - 1) % 7) + 1;
@@ -40,6 +41,7 @@ export function useWorkout() {
     if (localUser) {
       const data = JSON.parse(localUser);
       setHistory(data.progress || {});
+      setWorkoutDates(data.workoutDates || {});
     }
   }, [currentDay, completedExercises]);
 
@@ -204,7 +206,17 @@ export function useWorkout() {
     const userData = localUser ? JSON.parse(localUser) : { progress: {} };
     userData.progress = userData.progress || {};
     userData.progress[currentDay] = newCompleted;
+    
+    // Track calendar activity
+    const todayDate = new Date().toISOString().split('T')[0];
+    userData.workoutDates = userData.workoutDates || {};
+    userData.workoutDates[todayDate] = {
+      day: currentDay,
+      exercises: newCompleted
+    };
+    
     localStorage.setItem("workoutUser", JSON.stringify(userData));
+    setWorkoutDates(userData.workoutDates);
 
     // Update Firebase
     if (user) {
@@ -277,6 +289,7 @@ export function useWorkout() {
     completedExercises,
     restTimer,
     history,
+    workoutDates,
     toggleExercise,
     changeVersion,
     startTimer,

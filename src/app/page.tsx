@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useWorkout, Exercise } from "@/hooks/useWorkout";
 import { seedWorkoutData } from "@/lib/seed-data";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar as UICalendar } from "@/components/ui/calendar";
 import { 
   Loader2, 
   CheckCircle2, 
@@ -24,7 +25,8 @@ import {
   BookOpen,
   Utensils,
   TrendingUp,
-  Maximize2
+  Maximize2,
+  Activity
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -48,6 +50,7 @@ export default function WorkoutApp() {
     completedExercises,
     restTimer,
     history,
+    workoutDates,
     toggleExercise,
     changeVersion,
     setRestTimer
@@ -55,8 +58,30 @@ export default function WorkoutApp() {
 
   const [seeding, setSeeding] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
-  const [activeTab, setActiveTab] = useState<"workout" | "philosophy" | "nutrition" | "history" | "settings">("workout");
+  const [activeTab, setActiveTab] = useState<"workout" | "philosophy" | "nutrition" | "calendar" | "settings">("workout");
   const [isImageFullscreen, setIsImageFullscreen] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [sessionTime, setSessionTime] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const sessionTimer = setInterval(() => {
+      setSessionTime(prev => prev + 1);
+    }, 1000);
+    return () => clearInterval(sessionTimer);
+  }, []);
+
+  const formatSessionTime = (seconds: number) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    if (hrs > 0) return `${hrs}h ${mins}m ${secs}s`;
+    return `${mins}m ${secs}s`;
+  };
 
   const historyDays = Object.keys(history)
     .map(Number)
@@ -485,44 +510,49 @@ export default function WorkoutApp() {
           </motion.div>
         )}
 
-        {activeTab === "history" && (
+        {activeTab === "calendar" && (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold">Workout History</h2>
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              <Calendar className="h-6 w-6 text-primary" />
+              Workout Calendar
+            </h2>
+            
+            <Card className="border-zinc-800 bg-zinc-900/50 p-4 flex justify-center">
+              <UICalendar
+                mode="single"
+                className="rounded-md border-zinc-800 bg-transparent text-white"
+                modifiers={{
+                  workout: Object.keys(workoutDates).map(d => new Date(d + 'T00:00:00'))
+                }}
+                modifiersClassNames={{
+                  workout: "bg-primary/20 text-primary font-bold border border-primary/50"
+                }}
+              />
+            </Card>
+
             <div className="space-y-4">
-              {historyDays.length > 0 ? (
-                historyDays.map((day) => {
-                  const dayExercises = history[day] || [];
-                  const isToday = day === currentDay;
-                  return (
-                    <Card key={day} className={`border-zinc-800 bg-zinc-900/50 p-4 flex items-center justify-between ${isToday ? 'border-primary/50' : ''}`}>
+              <h3 className="text-sm font-medium text-zinc-500 uppercase tracking-wider">Recent Activity</h3>
+              {Object.entries(workoutDates).length > 0 ? (
+                Object.entries(workoutDates)
+                  .sort(([a], [b]) => b.localeCompare(a))
+                  .slice(0, 5)
+                  .map(([date, data]) => (
+                    <Card key={date} className="border-zinc-800 bg-zinc-900/50 p-4 flex items-center justify-between">
                       <div className="flex items-center gap-4">
-                        <div className={`h-10 w-10 rounded-full flex items-center justify-center ${isToday ? 'bg-primary/20 text-primary' : 'bg-zinc-800 text-zinc-500'}`}>
-                          <Calendar className="h-5 w-5" />
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                          <CheckCircle2 className="h-5 w-5" />
                         </div>
                         <div>
-                          <p className="font-bold">Day {day} {isToday && <span className="text-[10px] ml-1 uppercase bg-primary/20 text-primary px-1.5 py-0.5 rounded">Today</span>}</p>
-                          <p className="text-xs text-zinc-500">{dayExercises.length} Exercises Completed</p>
+                          <p className="font-bold">{new Date(date).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}</p>
+                          <p className="text-xs text-zinc-500">Day {data.day} • {data.exercises.length} exercises</p>
                         </div>
                       </div>
-                      <div className="flex -space-x-2">
-                        {dayExercises.slice(0, 3).map((ex, i) => (
-                          <div key={i} className="h-6 w-6 rounded-full bg-zinc-800 border-2 border-zinc-900 flex items-center justify-center text-[8px] font-bold text-zinc-400">
-                            {ex.charAt(0)}
-                          </div>
-                        ))}
-                        {dayExercises.length > 3 && (
-                          <div className="h-6 w-6 rounded-full bg-zinc-800 border-2 border-zinc-900 flex items-center justify-center text-[8px] font-bold text-zinc-400">
-                            +{dayExercises.length - 3}
-                          </div>
-                        )}
-                      </div>
                     </Card>
-                  );
-                })
+                  ))
               ) : (
-                <div className="text-center py-20 text-zinc-600">
-                  <History className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                  <p>No history yet. Start your first workout!</p>
+                <div className="text-center py-10 text-zinc-600 border border-dashed border-zinc-800 rounded-2xl">
+                  <Activity className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                  <p>No activity recorded yet.</p>
                 </div>
               )}
             </div>
@@ -657,7 +687,17 @@ export default function WorkoutApp() {
 
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 border-t border-zinc-900 bg-zinc-950/80 backdrop-blur-xl z-50">
-        <div className="mx-auto max-w-2xl px-4 h-20 flex items-center justify-between">
+        <div className="flex items-center justify-between px-6 py-1 border-b border-zinc-900/50 bg-zinc-900/20">
+          <div className="flex items-center gap-2 text-[10px] font-medium text-zinc-500">
+            <Clock className="h-3 w-3" />
+            {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+          </div>
+          <div className="flex items-center gap-2 text-[10px] font-medium text-zinc-500">
+            <Activity className="h-3 w-3 text-primary animate-pulse" />
+            Session: {formatSessionTime(sessionTime)}
+          </div>
+        </div>
+        <div className="mx-auto max-w-2xl px-4 h-16 flex items-center justify-between">
           <button 
             onClick={() => setActiveTab("workout")}
             className={`flex flex-col items-center gap-1 transition-colors flex-1 ${activeTab === "workout" ? 'text-primary' : 'text-zinc-500 hover:text-zinc-400'}`}
@@ -683,11 +723,11 @@ export default function WorkoutApp() {
           </button>
           
           <button 
-            onClick={() => setActiveTab("history")}
-            className={`flex flex-col items-center gap-1 transition-colors flex-1 ${activeTab === "history" ? 'text-primary' : 'text-zinc-500 hover:text-zinc-400'}`}
+            onClick={() => setActiveTab("calendar")}
+            className={`flex flex-col items-center gap-1 transition-colors flex-1 ${activeTab === "calendar" ? 'text-primary' : 'text-zinc-500 hover:text-zinc-400'}`}
           >
-            <History className="h-5 w-5" />
-            <span className="text-[9px] font-bold uppercase tracking-tighter">History</span>
+            <Calendar className="h-5 w-5" />
+            <span className="text-[9px] font-bold uppercase tracking-tighter">Calendar</span>
           </button>
           
           <button 
