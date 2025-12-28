@@ -144,11 +144,11 @@ export default function WorkoutApp() {
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-24 relative overflow-x-hidden selection:bg-indigo-500/30">
       {/* Status Overlay (PWA Style) */}
-      <div className="fixed top-0 left-0 right-0 z-[100] px-4 py-2 flex justify-between items-center pointer-events-none opacity-40 hover:opacity-100 transition-opacity">
-        <div className="text-[10px] font-black tracking-widest text-zinc-400">
+      <div className="fixed top-0 left-0 right-0 z-[100] px-4 py-2 flex justify-between items-center pointer-events-none opacity-80 hover:opacity-100 transition-opacity">
+        <div className="text-[10px] font-black tracking-widest text-zinc-300">
           {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </div>
-        <div className="text-[10px] font-black tracking-widest text-zinc-400">
+        <div className="text-[10px] font-black tracking-widest text-zinc-300">
           {formatSessionTime(sessionTime)}
         </div>
       </div>
@@ -260,7 +260,7 @@ export default function WorkoutApp() {
                   <h1 className="text-4xl font-black tracking-tighter bg-gradient-to-r from-indigo-400 via-violet-400 to-indigo-400 bg-clip-text text-transparent animate-gradient-x">
                     Muscle Gain
                   </h1>
-                  <p className="text-zinc-300 font-bold uppercase tracking-widest text-[11px] mt-1 opacity-80">
+                  <p className="text-zinc-200 font-bold uppercase tracking-widest text-[11px] mt-1 opacity-80">
                     Day {currentDay} • {dayNames[displayDay - 1]}
                   </p>
                 </div>
@@ -308,7 +308,7 @@ export default function WorkoutApp() {
               {workoutDay?.exercises.length ? (
                 <div className="space-y-6">
                   <div className="space-y-2">
-                    <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">
+                    <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.2em] text-zinc-300">
                       <span>Live Progress</span>
                       <span className="text-indigo-400">{completedExercises.length} / {workoutDay.exercises.length} Completed</span>
                     </div>
@@ -469,7 +469,7 @@ export default function WorkoutApp() {
             </div>
 
             <div className="space-y-5">
-              <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] pl-1">Progression Protocol</h3>
+              <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.3em] pl-1">Progression Protocol</h3>
               <div className="rounded-[2.5rem] border border-amber-500/20 bg-amber-500/5 p-8 space-y-6 backdrop-blur-md relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-10 opacity-[0.03] pointer-events-none">
                   <TrendingUp className="h-60 w-60 text-amber-500" />
@@ -512,14 +512,14 @@ export default function WorkoutApp() {
                 <p className="text-[10px] text-emerald-500 font-black uppercase tracking-[0.2em] mb-2 opacity-80">Daily Intake</p>
                 <div className="flex items-baseline gap-2">
                   <p className="text-4xl font-black text-white tracking-tighter">2800</p>
-                  <p className="text-xs font-black text-zinc-500 uppercase tracking-widest">KCAL</p>
+                  <p className="text-xs font-black text-zinc-400 uppercase tracking-widest">KCAL</p>
                 </div>
               </Card>
               <Card className="border-teal-500/30 bg-teal-500/5 backdrop-blur-md p-6 rounded-3xl shadow-xl">
                 <p className="text-[10px] text-teal-500 font-black uppercase tracking-[0.2em] mb-2 opacity-80">Protein Goal</p>
                 <div className="flex items-baseline gap-2">
                   <p className="text-4xl font-black text-white tracking-tighter">100</p>
-                  <p className="text-xs font-black text-zinc-500 uppercase tracking-widest">GMS</p>
+                  <p className="text-xs font-black text-zinc-400 uppercase tracking-widest">GMS</p>
                 </div>
               </Card>
             </div>
@@ -553,7 +553,7 @@ export default function WorkoutApp() {
             </Card>
 
             <div className="space-y-5">
-              <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] pl-1">Target Milestones</h3>
+              <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.3em] pl-1">Target Milestones</h3>
               <div className="rounded-[2.5rem] border border-zinc-800/40 bg-zinc-900/30 overflow-hidden backdrop-blur-md shadow-2xl">
                 {[
                   { label: "Weekly Gain", value: "0.5 kg", sub: "Steady Lean Mass", color: "text-emerald-400" },
@@ -597,12 +597,21 @@ export default function WorkoutApp() {
                   mode="single"
                   selected={selectedDate}
                   onSelect={setSelectedDate}
-                  className="rounded-3xl bg-transparent text-white"
+                  className="rounded-3xl bg-transparent"
+                  classNames={{
+                    day: "text-zinc-200 font-bold hover:bg-rose-500/20 hover:text-rose-400 rounded-xl transition-all",
+                    selected: "bg-rose-600 text-white font-black rounded-xl shadow-[0_0_20px_rgba(225,29,72,0.5)]",
+                    today: "text-rose-400 font-black ring-1 ring-rose-500/50",
+                    outside: "text-zinc-600 opacity-30",
+                    caption_label: "text-zinc-100 font-black uppercase tracking-widest text-xs",
+                    nav_button: "text-zinc-400 hover:text-white transition-colors",
+                    head_cell: "text-zinc-500 font-black uppercase text-[10px] tracking-widest pb-4",
+                  }}
                   modifiers={{
                     workout: Object.keys(workoutDates).map(d => new Date(d + 'T00:00:00'))
                   }}
                   modifiersClassNames={{
-                    workout: "bg-rose-600 text-white font-black rounded-xl shadow-[0_0_20px_rgba(225,29,72,0.5)] hover:bg-rose-500 transition-all border-none"
+                    workout: "bg-rose-600/20 text-rose-400 font-black rounded-xl ring-1 ring-rose-500/30"
                   }}
                 />
                 <div className="mt-6 flex flex-col items-center gap-2">
@@ -610,7 +619,7 @@ export default function WorkoutApp() {
                     <div className="h-2 w-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(225,29,72,0.8)]" />
                     Completed Workout
                   </div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 text-center px-4 leading-relaxed mt-2">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 text-center px-4 leading-relaxed mt-2">
                     Select a date to view your workout performance
                   </p>
                 </div>
@@ -678,8 +687,8 @@ export default function WorkoutApp() {
                       className="text-center py-20 bg-zinc-900/20 border-2 border-dashed border-zinc-800/40 rounded-[2rem] backdrop-blur-md"
                     >
                       <Activity className="h-16 w-16 mx-auto mb-4 opacity-5 animate-pulse" />
-                      <p className="text-xl font-black text-zinc-600 tracking-tight">No activity logged</p>
-                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-700 mt-2">Persistence builds results</p>
+                      <p className="text-xl font-black text-zinc-400 tracking-tight">No activity logged</p>
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mt-2">Persistence builds results</p>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -699,7 +708,7 @@ export default function WorkoutApp() {
             </div>
             
             <div className="space-y-5">
-              <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] pl-1">Maintenance</h3>
+              <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.3em] pl-1">Maintenance</h3>
               <div className="grid gap-4">
                 <Button 
                   variant="outline" 
@@ -712,10 +721,10 @@ export default function WorkoutApp() {
                     </div>
                     <div className="text-left">
                       <p className="font-black text-zinc-100 text-lg tracking-tight">Reset Progress</p>
-                      <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Wipe all local records</p>
+                      <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Wipe all local records</p>
                     </div>
                   </div>
-                  <ArrowRight className="h-6 w-6 text-zinc-700 group-hover:text-red-400 group-hover:translate-x-1 transition-all" />
+                  <ArrowRight className="h-6 w-6 text-zinc-500 group-hover:text-red-400 group-hover:translate-x-1 transition-all" />
                 </Button>
                 
                 <Button 
@@ -729,16 +738,16 @@ export default function WorkoutApp() {
                     </div>
                     <div className="text-left">
                       <p className="font-black text-zinc-100 text-lg tracking-tight">Refresh Plans</p>
-                      <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Re-sync exercise database</p>
+                      <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Re-sync exercise database</p>
                     </div>
                   </div>
-                  <ArrowRight className="h-6 w-6 text-zinc-700 group-hover:text-emerald-400 group-hover:translate-x-1 transition-all" />
+                  <ArrowRight className="h-6 w-6 text-zinc-500 group-hover:text-emerald-400 group-hover:translate-x-1 transition-all" />
                 </Button>
               </div>
             </div>
 
             <div className="space-y-5 pt-4 border-t border-zinc-900/50">
-              <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em] pl-1">Build Manifest</h3>
+              <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.3em] pl-1">Build Manifest</h3>
               <Card className="border-zinc-800/40 bg-zinc-900/30 backdrop-blur-md p-7 space-y-5 rounded-[2.5rem] shadow-2xl">
                 {[
                   { label: "Architecture", value: "Next.js 15 PWA" },
@@ -789,19 +798,19 @@ export default function WorkoutApp() {
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div className="rounded-2xl bg-zinc-900/60 p-5 border border-zinc-800/50 shadow-inner group transition-all hover:border-indigo-500/30">
-                      <p className="text-[10px] text-zinc-500 uppercase font-black tracking-widest mb-1">Volume</p>
+                      <p className="text-[10px] text-zinc-400 uppercase font-black tracking-widest mb-1">Volume</p>
                       <p className="text-xl font-black text-indigo-400 tracking-tighter">{selectedExercise.sets} × {selectedExercise.reps}</p>
                     </div>
                     <div className="rounded-2xl bg-zinc-900/60 p-5 border border-zinc-800/50 shadow-inner group transition-all hover:border-indigo-500/30">
-                      <p className="text-[10px] text-zinc-500 uppercase font-black tracking-widest mb-1">Recovery</p>
+                      <p className="text-[10px] text-zinc-400 uppercase font-black tracking-widest mb-1">Recovery</p>
                       <p className="text-xl font-black text-indigo-400 tracking-tighter">{selectedExercise.rest || "Auto"}</p>
                     </div>
                     <div className="rounded-2xl bg-zinc-900/60 p-5 border border-zinc-800/50 shadow-inner group transition-all hover:border-indigo-500/30">
-                      <p className="text-[10px] text-zinc-500 uppercase font-black tracking-widest mb-1">Cadence</p>
+                      <p className="text-[10px] text-zinc-400 uppercase font-black tracking-widest mb-1">Cadence</p>
                       <p className="text-xl font-black text-indigo-400 tracking-tighter">{selectedExercise.tempo || "3-0-1"}</p>
                     </div>
                     <div className="rounded-2xl bg-zinc-900/60 p-5 border border-zinc-800/50 shadow-inner group transition-all hover:border-indigo-500/30">
-                      <p className="text-[10px] text-zinc-500 uppercase font-black tracking-widest mb-1">Target</p>
+                      <p className="text-[10px] text-zinc-400 uppercase font-black tracking-widest mb-1">Target</p>
                       <p className="text-xl font-black text-indigo-400 tracking-tighter">Mass Gain</p>
                     </div>
                   </div>
@@ -855,7 +864,7 @@ export default function WorkoutApp() {
               <button 
                 key={item.id}
                 onClick={() => setActiveTab(item.id as any)}
-                className={`relative flex flex-col items-center gap-1.5 transition-all duration-500 flex-1 group py-2 ${isActive ? item.color : 'text-zinc-600 hover:text-zinc-400'}`}
+                className={`relative flex flex-col items-center gap-1.5 transition-all duration-500 flex-1 group py-2 ${isActive ? item.color : 'text-zinc-500 hover:text-zinc-300'}`}
               >
                 <div className={`relative transition-all duration-500 ${isActive ? 'scale-110 -translate-y-1' : 'group-hover:scale-105 opacity-60'}`}>
                   {isActive && (
