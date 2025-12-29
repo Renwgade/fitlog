@@ -5,8 +5,11 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "export": "next export",
+    "deploy": "npm run build && firebase deploy",
+    "lint": "eslint",
+    "prepare": "npm install firebase-tools@^13 --save-dev",
+    "start": "next start"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

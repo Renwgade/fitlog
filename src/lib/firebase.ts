@@ -18,17 +18,20 @@ let db: any;
 let storage: any;
 
 try {
+  if (firebaseConfig.apiKey === "mock-key") {
+    throw new Error("Using mock keys - forcing offline mode");
+  }
+
   app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
   auth = getAuth(app);
   db = getFirestore(app);
   storage = getStorage(app);
 } catch (e) {
   console.warn("Firebase initialization failed. Using mock services.");
-  // Mock objects to prevent crashes
-  app = {} as any;
-  auth = { onAuthStateChanged: () => () => {} } as any;
-  db = {} as any;
-  storage = {} as any;
+  app = null;
+  auth = null;
+  db = null;
+  storage = null;
 }
 
 export { app, auth, db, storage };

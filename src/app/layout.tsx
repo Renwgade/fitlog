@@ -14,13 +14,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Orchids Workout",
+  title: "Renwgade Workout",
   description: "Muscle Gain Transformation App",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Orchids Workout",
+    title: "Renwgade Workout",
   },
   formatDetection: {
     telephone: false,
@@ -33,12 +33,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
-        <VisualEditsMessenger />
+        {process.env.NODE_ENV === "development" && <VisualEditsMessenger />}
       </body>
     </html>
   );
